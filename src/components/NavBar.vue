@@ -4,7 +4,7 @@
       <li><router-link to="/">Главная</router-link></li>
       <li v-if="isAuthenticated"><router-link to="/generate">Генерация онтологий</router-link></li>
       <li v-if="isAuthenticated && !isAdmin"><router-link to="/requests">Формирование заявки</router-link></li>
-      <li v-if="isAuthenticated && isAdmin"><router-link to="/admin">Список заявок</router-link></li>
+      <!-- <li v-if="isAuthenticated && isAdmin"><router-link to="/admin">Список заявок</router-link></li> -->
       <li v-if="isAuthenticated"><router-link to="/download">Список готовых RDF</router-link></li>
     </ul>
     <li v-if="!isAuthenticated" class="logout-button"><router-link to="/auth">Войти</router-link></li>
@@ -22,7 +22,7 @@ export default defineComponent({
   name: 'Navbar',
   setup() {
     const store = useUserStore(); // Перемещено внутрь setup()
-    const isAuthenticated = computed(() => store.isAuthenticated);
+    const isAuthenticated = computed(() => true);//store.isAuthenticated);
     const isAdmin = computed(() => store.isAdmin);
 
     const router = useRouter();

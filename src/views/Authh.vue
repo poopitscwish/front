@@ -19,6 +19,8 @@
 <script lang="ts">
 import { useUserStore } from '@/store';
 import { ref } from 'vue';
+import axios, { AxiosError } from 'axios';
+import router from '@/route';
 
 export default {
   name: 'Auth',
@@ -29,20 +31,44 @@ export default {
     });
     const errorMessage = ref('');
     const store = useUserStore(); // Перемещено внутрь setup()
-    function login() {
+    function getCSRFToken() {
+      return document.cookie.split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+    }
+    async function login() {
       if (credentials.value.email && credentials.value.password) {
-        // Здесь должна быть логика отправки данных для авторизации
         console.log('Попытка входа с', credentials.value);
 
-        // Пример проверки (на самом деле должен быть запрос к серверу)
-        if (credentials.value.email === 'user@example.com' && credentials.value.password === 'password') {
-          // Логика в случае успешной авторизации
-          store.login(credentials.value);
-          errorMessage.value = 'Успешный вход';
-          // перенаправление на защищенную страницу, например router.push('/dashboard');
-        } else {
-          // Если данные не верны, показываем сообщение об ошибке
-          errorMessage.value = 'Неверный логин или пароль';
+        try {
+
+          // Отправляем запрос на серверную конечную точку для авторизации
+          const response = await axios.post('https://shenyafoma20032.fvds.ru/api/login/', credentials.value, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCSRFToken(),
+            }
+          });
+          store.login(response.data.user); // предполагается, что сервер возвращает данные пользователя или токен
+          router.push('/');
+          console.log('Успешный вход:', response.data.user);
+          errorMessage.value = '';
+
+        } catch (error) {
+          const axiosError = error as AxiosError;  // Утверждение типа
+          if (axiosError.response) {
+            const status = axiosError.response.status;
+            if (status === 400 || status === 401) {
+              // Если сервер вернул ошибку 400 или 401, значит данные не верны
+              errorMessage.value = 'Неверный логин или пароль';
+            } else {
+              // Обработка других ошибок
+              errorMessage.value = 'Произошла ошибка при попытке входа';
+            }
+          } else {
+            // Обработка ошибок, не связанных с HTTP ответом
+            errorMessage.value = 'Произошла ошибка при попытке входа';
+          }
         }
       } else {
         errorMessage.value = 'Пожалуйста, введите данные';
